@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
   child=fork();
   if (child==-1) { bail("pidsig cannot fork",NULL); }
   if (child==0) {
+    /* XXX: wait for pipe? */
     execvp(*argv,argv);
     bail("pidsig can't exec ",*argv);
   }
