@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
   if (argc <= 1) { bail(USAGE,NULL); }
   argv++; argc--;
 
+  /* parse options */
   while((argc > 0) && *argv && (argv[0][0] == '-')) {
     argc--;
     opt=argv[0][1];
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  /* prepare for options */
   if (optd) {
     if (getuid()) {
       bail("only root can chroot",NULL);
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  /* djb-chain */
   child=fork();
   if (child==-1) { bail("pidsig cannot fork",NULL); }
   if (child==0) {
@@ -79,10 +82,12 @@ int main(int argc, char *argv[])
     bail("pidsig can't exec",NULL);
   }
 
+  /* execute options */
   if (optd) { chroot(optd); chdir("/"); }
   if (optu) { }
   if (optp) { }
 
+  /* wait for any signal or exiting child */
   while (waitpid(-1,&status,0)) {
     if (WIFEXITED(status)) break;
   }
