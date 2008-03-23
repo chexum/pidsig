@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bail(const char *msg)
+void bail(const char *a0,const char *a1)
 {
-  write(2,msg,strlen(msg));
+  if (a0) { write(2,a0,strlen(a0)); }
+  if (a1) { write(2,a1,strlen(a1)); }
   write(2,"\n",sizeof("\n")-1);
   exit(1);
 }
@@ -14,29 +15,38 @@ void bail(const char *msg)
 
 /* pidsig -p pid1 -p pid2 -d chroot -u root fghack /usr/bin/nginx */
 
+char *optu=NULL;
+char *optd=NULL;
+char *optp=NULL;
+
 int main(int argc, char *argv[])
 {
   char *val,opt;
+  pid_t child;
 
   /* empty cmd?? */
-  if (argc <= 1) { bail(USAGE); }
+  if (argc <= 1) { bail(USAGE,NULL); }
   argv++; argc--;
 
   while((argc > 0) && *argv && (argv[0][0] == '-')) {
     argc--;
     opt=argv[0][1];
     switch(opt) {
-      case 'p':
-      case 'd':
       case 'u':
+      case 'd':
+      case 'p':
         if (argv[0][2]) {
 	  val=&argv[0][2];
 	} else if (argc > 0) {
 	  argc--; val=*++argv;
 	} else {
-	  bail(USAGE);
+	  bail("option needs arg: ",USAGE);
 	}
 	argv++;
+
+	if ('u' == opt) { optu=val; }
+	if ('d' == opt) { optd=val; }
+	if ('p' == opt) { optp=val; }
 	break;
 
       case '-':
@@ -44,12 +54,21 @@ int main(int argc, char *argv[])
         continue;
 
       default:
-	bail(USAGE);
+	bail("bad option, usage: ",USAGE);
 	break;
     }
   }
 
-  execvp(*argv,argv);
+  child=fork();
+  if (child==-1) { bail("pidsig cannot fork",NULL); }
+  if (child==0) {
+    execvp(*argv,argv);
+    bail("pidsig can't exec",NULL);
+  }
+
+  if (optu) { }
+  if (optd) { }
+  if (optp) { }
 
   exit (0);
 }
