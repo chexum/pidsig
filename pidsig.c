@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 
   /* execute options */
   if (optd) { chroot(optd); chdir("/"); }
-  if (optu) { setuid(uval); }
+  if (optu) { if(gval) setgid(gval); setuid(uval); }
   if (optp) { }
 
   /* wait for any signal or exiting child */
