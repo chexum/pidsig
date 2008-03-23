@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <pwd.h>
 
 void bail(const char *a0,const char *a1)
 {
@@ -19,6 +20,8 @@ void bail(const char *a0,const char *a1)
 /* pidsig -p pid1 -p pid2 -d chroot -u root fghack /usr/bin/nginx */
 
 char *optu=NULL;
+long int uval=0;
+long int gval=0;
 char *optd=NULL;
 char *optp=NULL;
 
@@ -26,7 +29,8 @@ int main(int argc, char *argv[])
 {
   pid_t child;
   int status;
-  char *val,opt;
+  char *val,opt,*uend;
+  struct passwd *upw;
 
   /* empty cmd?? */
   if (argc <= 1) { bail(USAGE,NULL); }
@@ -73,6 +77,20 @@ int main(int argc, char *argv[])
       bail("chroot dir",NULL);
     }
   }
+  if (optu) {
+    if (getuid()) {
+      bail("only root can ","change users");
+    }
+    uval=strtol(optu,&uend,10);
+    if (*uend!='\0') {
+      upw=getpwnam(optu);
+      if (!upw) {
+        bail("bad user to change: ",optu);
+      }
+      uval=upw->pw_uid;
+      gval=upw->pw_gid;
+    }
+  }
 
   /* djb-chain */
   child=fork();
@@ -84,7 +102,7 @@ int main(int argc, char *argv[])
 
   /* execute options */
   if (optd) { chroot(optd); chdir("/"); }
-  if (optu) { }
+  if (optu) { setuid(uval); }
   if (optp) { }
 
   /* wait for any signal or exiting child */

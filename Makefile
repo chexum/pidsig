@@ -1,5 +1,5 @@
-CFLAGS=-Os
-CC=gcc
+CFLAGS=-Os -Wall
+CC=diet gcc
 TARGET=pidsig
 
 all: $(TARGET)
