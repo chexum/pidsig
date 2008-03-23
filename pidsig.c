@@ -71,10 +71,10 @@ int main(int argc, char *argv[])
   /* prepare for options */
   if (optd) {
     if (getuid()) {
-      bail("only root can chroot",NULL);
+      bail("only root can ","chroot");
     }
     if (chdir(optd)) {
-      bail("chroot dir",NULL);
+      bail("bad chroot dir: ",optd);
     }
   }
   if (optu) {
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
   if (child==-1) { bail("pidsig cannot fork",NULL); }
   if (child==0) {
     execvp(*argv,argv);
-    bail("pidsig can't exec",NULL);
+    bail("pidsig can't exec ",*argv);
   }
 
   /* execute options */
