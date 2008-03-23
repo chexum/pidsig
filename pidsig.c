@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 void bail(const char *a0,const char *a1)
 {
   if (a0) { write(2,a0,strlen(a0)); }
@@ -21,8 +24,9 @@ char *optp=NULL;
 
 int main(int argc, char *argv[])
 {
-  char *val,opt;
   pid_t child;
+  int status;
+  char *val,opt;
 
   /* empty cmd?? */
   if (argc <= 1) { bail(USAGE,NULL); }
@@ -69,6 +73,10 @@ int main(int argc, char *argv[])
   if (optu) { }
   if (optd) { }
   if (optp) { }
+
+  while (waitpid(-1,&status,0)) {
+    if (WIFEXITED(status)) break;
+  }
 
   exit (0);
 }
