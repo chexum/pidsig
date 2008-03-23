@@ -1,0 +1,1 @@
+pidsig -p pid1 -p pid2 -d chroot -u root fghack /usr/bin/nginx 
