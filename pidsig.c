@@ -63,6 +63,15 @@ int main(int argc, char *argv[])
     }
   }
 
+  if (optd) {
+    if (getuid()) {
+      bail("only root can chroot",NULL);
+    }
+    if (chdir(optd)) {
+      bail("chroot dir",NULL);
+    }
+  }
+
   child=fork();
   if (child==-1) { bail("pidsig cannot fork",NULL); }
   if (child==0) {
@@ -70,8 +79,8 @@ int main(int argc, char *argv[])
     bail("pidsig can't exec",NULL);
   }
 
+  if (optd) { chroot(optd); chdir("/"); }
   if (optu) { }
-  if (optd) { }
   if (optp) { }
 
   while (waitpid(-1,&status,0)) {
