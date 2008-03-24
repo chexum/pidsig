@@ -22,7 +22,7 @@ void bail(const char *a0,const char *a1)
   exit(1);
 }
 
-#define USAGE "pidsig [-p pidN].. [-d chroot] [-u user] cmd..."
+#define USAGE "pidsig [-p pidN].. [-d chroot] [-u user] [--] cmd..."
 
 /* pidsig -p pid1 -p pid2 -d chroot -u root fghack /usr/bin/nginx */
 
