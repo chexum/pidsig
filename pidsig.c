@@ -28,8 +28,9 @@ long int gval=0;
 char *optd=NULL;
 char *optp=NULL;
 pid_t child;
+int pipefd=-1;
 
-void killpidfile(char *pidfile,int sig)
+int killpidfile(char *pidfile,int sig)
 {
   int fd;
   char buf[20],*uend;
@@ -43,15 +44,18 @@ void killpidfile(char *pidfile,int sig)
       buf[sz]=0;
       pid=strtol(buf,&uend,10);
       if (uend != buf && (*uend == '\0' || *uend == '\n' || *uend == '\r') && pid > 1) {
-        kill (pid,sig);
+        return kill (pid,sig);
       }
     }
   }
+  return -1;
 }
 
 void pidsighandler(int sig)
 {
   int childstatus;
+  int killed=0;
+
   if (SIGCHLD == sig) {
     /* only care about our single descendant */
     if (0 != child) {
@@ -62,8 +66,9 @@ void pidsighandler(int sig)
     return;
   }
 
-  if (child) { kill(child,sig); }
-  killpidfile(optp,sig);
+  if (child && kill(child,sig)>=0) { killed++; }
+  if (killpidfile(optp,sig)>=0) { killed++; }
+  if (!killed) { exit(1); }
 }
 
 void setsighandler(void (*myhandler)(int))
@@ -93,7 +98,6 @@ int main(int argc, char *argv[])
   char *val,opt,*uend,buf[1];
   struct passwd *upw;
   int fdpair[2];
-  fd_set fdr;
 
   /* empty cmd?? */
   if (argc <= 1) { bail("pidsig: usage:\n",USAGE); }
@@ -189,17 +193,23 @@ int main(int argc, char *argv[])
   /* go */
   write(fdpair[1],"\n",1);
   close(fdpair[1]);
-
-  /* select for fdpair[0] readability (eof, QUIT) */
-  /* pass signals through */
-  /* XXX */
+  pipefd=fdpair[0];
 
   /* wait for any signal or exiting child */
   for(;;) {
+    fd_set fdr;
+    int res;
+
     FD_ZERO(&fdr);
-    FD_SET(fdpair[0],&fdr);
-    /* if the pipe hack is closed, we'll leave */
-    if (select(fdpair[0]+1,&fdr,NULL,NULL,NULL)>0) break;
+    if (pipefd>=0) FD_SET(pipefd,&fdr);
+    /* if the pipe hack is closed and out of children, we'll leave */
+    res=select(pipefd+1,&fdr,NULL,NULL,NULL);
+    if (res > 0) {
+      if (pipefd>=0) {
+        close(pipefd); pipefd=-1;
+      }
+    }
+    if (-1 == pipefd && 0 == child) break;
   }
 
   exit (0);
