@@ -30,7 +30,9 @@ char *optu=NULL;
 long int uval=0;
 long int gval=0;
 char *optd=NULL;
-char *optp=NULL;
+#define OPTPMAX 16
+int optpnum=0;
+char *optp[OPTPMAX];
 pid_t child;
 int pipefd=-1;
 
@@ -59,6 +61,7 @@ void pidsighandler(int sig)
 {
   int childstatus;
   int killed=0;
+  int i;
 
   if (SIGCHLD == sig) {
     /* only care about our single descendant */
@@ -70,8 +73,10 @@ void pidsighandler(int sig)
     return;
   }
 
-  if (child && kill(child,sig)>=0) { killed++; }
-  if (killpidfile(optp,sig)>=0) { killed++; }
+  if (child && kill(child,sig)==0) { killed++; }
+  for(i=0; i<optpnum; i++) {
+    if (killpidfile(optp[i],sig)==0) { killed++; }
+  }
   if (!killed) { exit(1); }
 }
 
@@ -102,6 +107,7 @@ int main(int argc, char *argv[])
   char *val,opt,*uend,buf[1];
   struct passwd *upw;
   int fdpair[2];
+  char **optparr=optp;
 
   /* empty cmd?? */
   if (argc <= 1) { bail("pidsig: usage:\n",USAGE); }
@@ -132,7 +138,11 @@ int main(int argc, char *argv[])
 	  if (optd) { bail("pidsig: option can be specified only once: ","-d"); }
 	  optd=val;
 	}
-	if ('p' == opt) { optp=val; }
+	if ('p' == opt) {
+	  if (optpnum >= OPTPMAX) { bail("pidsig: too many -p options, last: ",val); }
+	  *optparr++=val;
+	  optpnum++;
+	}
 	break;
 
       case '-':
