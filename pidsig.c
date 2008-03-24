@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
   fd_set fdr;
 
   /* empty cmd?? */
-  if (argc <= 1) { bail(USAGE,NULL); }
+  if (argc <= 1) { bail("pidsig: usage:\n",USAGE); }
   argv++; argc--;
 
   /* parse options */
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 	} else if (argc > 0) {
 	  argc--; val=*++argv;
 	} else {
-	  bail("option needs arg: ",USAGE);
+	  bail("pidsig: option needs arg: ",argv[0]);
 	}
 	argv++;
 
@@ -108,48 +108,59 @@ int main(int argc, char *argv[])
         continue;
 
       default:
-	bail("bad option, usage: ",USAGE);
+	bail("pidsig: bad option, usage:\n",USAGE);
 	break;
     }
   }
 
   /* prepare for options */
   if (optd) {
-    if (getuid()) {
-      bail("only root can ","chroot");
-    }
+    /* XXX with -u given, root may not be able to change to the directory (NFS) */
     if (chdir(optd)) {
-      bail("bad chroot dir: ",optd);
+      bail("pidsig: can't change to directory: ",optd);
     }
   }
   if (optu) {
-    if (getuid()) {
-      bail("only root can ","change users");
-    }
     uval=strtol(optu,&uend,10);
     if (*uend!='\0' || uend == optu) {
       upw=getpwnam(optu);
       if (!upw) {
-        bail("bad user to change: ",optu);
+        bail("pidsig: unknown uid: ",optu);
       }
       uval=upw->pw_uid;
       gval=upw->pw_gid;
     }
   }
+  if (*argv == NULL) {
+    bail("pidsig: no command to ","execv");
+  }
+  if (optu || optd) {
+    if (getuid()) {
+      if (optu && optd) {
+        bail("pidsig: only root can ","chroot or change uid");
+      }
+      if (optu) {
+        bail("pidsig: only root can ","change uid");
+      }
+      if (optd) {
+        bail("pidsig: only root can ","chroot");
+      }
+    }
+  }
 
   /* fghack/startup delay */
   if (pipe(fdpair)) {
-    bail("can't create ","pipe");
+    bail("pidsig: can't create ","pipe");
   }
 
   /* djb-chain */
   child=fork();
-  if (child==-1) { bail("pidsig cannot fork",NULL); }
+  if (child==-1) { bail("pidsig: can't ","fork"); }
   if (child==0) {
     read(fdpair[0],buf,1);
     close(fdpair[0]);
     execvp(*argv,argv);
-    bail("pidsig can't exec ",*argv);
+    bail("pidsig: can't exec ",*argv);
   }
 
   /* execute options */
