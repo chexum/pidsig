@@ -124,8 +124,14 @@ int main(int argc, char *argv[])
 	}
 	argv++;
 
-	if ('u' == opt) { optu=val; }
-	if ('d' == opt) { optd=val; }
+	if ('u' == opt) {
+	  if (optu) { bail("pidsig: option can be specified only once: ","-u"); }
+	  optu=val;
+	}
+	if ('d' == opt) {
+	  if (optd) { bail("pidsig: option can be specified only once: ","-d"); }
+	  optd=val;
+	}
 	if ('p' == opt) { optp=val; }
 	break;
 
