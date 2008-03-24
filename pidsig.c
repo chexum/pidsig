@@ -64,7 +64,7 @@ void pidsighandler(int sig)
     /* only care about our single descendant */
     if (0 != child) {
       if(waitpid(-1,&childstatus,WNOHANG) == child) {
-        if (WIFEXITED(childstatus)) { child=0; }
+        if (WIFEXITED(childstatus) || WIFSIGNALED(childstatus)) { child=0; }
       }
     }
     return;
