@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
       bail("only root can ","change users");
     }
     uval=strtol(optu,&uend,10);
-    if (*uend!='\0') {
+    if (*uend!='\0' || uend == optu) {
       upw=getpwnam(optu);
       if (!upw) {
         bail("bad user to change: ",optu);
