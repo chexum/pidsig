@@ -1,4 +1,8 @@
 
+/* Copyright (C) 2008, Farkas Janos
+ * See LICENSE.txt
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
