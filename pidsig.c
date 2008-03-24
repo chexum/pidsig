@@ -43,7 +43,7 @@ int killpidfile(char *pidfile,int sig)
     if (sz > 0) {
       buf[sz]=0;
       pid=strtol(buf,&uend,10);
-      if (uend != buf && (*uend == '\0' || *uend == '\n' || *uend == '\r') && pid > 1) {
+      if (uend != buf && (*uend == '\0' || *uend == '\n' || *uend == '\r' || *uend == ' ' || *uend == '\t') && pid > 1) {
         return kill (pid,sig);
       }
     }
