@@ -51,6 +51,17 @@ void killpidfile(char *pidfile,int sig)
 
 void pidsighandler(int sig)
 {
+  int childstatus;
+  if (SIGCHLD == sig) {
+    /* only care about our single descendant */
+    if (0 != child) {
+      if(waitpid(-1,&childstatus,WNOHANG) == child) {
+        if (WIFEXITED(childstatus)) { child=0; }
+      }
+    }
+    return;
+  }
+
   if (child) { kill(child,sig); }
   killpidfile(optp,sig);
 }
@@ -60,19 +71,26 @@ void setsighandler(void (*myhandler)(int))
   struct sigaction sa;
   memset(&sa,0,sizeof(sa));
   sa.sa_handler=myhandler;
+  /* common signals */
   sigaction(SIGINT,&sa,NULL);
   sigaction(SIGHUP,&sa,NULL);
-  sigaction(SIGQUIT,&sa,NULL);
   sigaction(SIGTERM,&sa,NULL);
+
+  /* less common ones */
+  sigaction(SIGQUIT,&sa,NULL);
   sigaction(SIGUSR1,&sa,NULL);
   sigaction(SIGUSR2,&sa,NULL);
+  /* qmail-send */
   sigaction(SIGALRM,&sa,NULL);
+  /* nginx */
+  sigaction(SIGWINCH,&sa,NULL);
+  /* only to handle our single one */
+  sigaction(SIGCHLD,&sa,NULL);
 }
 
 int main(int argc, char *argv[])
 {
   char *val,opt,*uend,buf[1];
-  int status;
   struct passwd *upw;
   int fdpair[2];
   fd_set fdr;
@@ -180,11 +198,8 @@ int main(int argc, char *argv[])
   for(;;) {
     FD_ZERO(&fdr);
     FD_SET(fdpair[0],&fdr);
+    /* if the pipe hack is closed, we'll leave */
     if (select(fdpair[0]+1,&fdr,NULL,NULL,NULL)>0) break;
-    if (child>0) {
-      waitpid(-1,&status,WNOHANG);
-      if (WIFEXITED(status)) { child=0; }
-    }
   }
 
   exit (0);
