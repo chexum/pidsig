@@ -24,13 +24,15 @@ long int uval=0;
 long int gval=0;
 char *optd=NULL;
 char *optp=NULL;
+pid_t child;
 
 int main(int argc, char *argv[])
 {
-  pid_t child;
+  char *val,opt,*uend,buf[1];
   int status;
-  char *val,opt,*uend;
   struct passwd *upw;
+  int fdpair[2];
+  fd_set fdr;
 
   /* empty cmd?? */
   if (argc <= 1) { bail(USAGE,NULL); }
@@ -92,11 +94,17 @@ int main(int argc, char *argv[])
     }
   }
 
+  /* fghack/startup delay */
+  if (pipe(fdpair)) {
+    bail("can't create ","pipe");
+  }
+
   /* djb-chain */
   child=fork();
   if (child==-1) { bail("pidsig cannot fork",NULL); }
   if (child==0) {
-    /* XXX: wait for pipe? */
+    read(fdpair[0],buf,1);
+    close(fdpair[0]);
     execvp(*argv,argv);
     bail("pidsig can't exec ",*argv);
   }
@@ -104,11 +112,21 @@ int main(int argc, char *argv[])
   /* execute options */
   if (optd) { chroot(optd); chdir("/"); }
   if (optu) { if(gval) setgid(gval); setuid(uval); }
-  if (optp) { }
+
+  /* go */
+  write(fdpair[1],"\n",1);
+  close(fdpair[1]);
+
+  /* select for fdpair[0] readability (eof, QUIT) */
+  /* pass signals through */
+  /* XXX */
 
   /* wait for any signal or exiting child */
-  while (waitpid(-1,&status,0)) {
-    if (WIFEXITED(status)) break;
+  for(;;) {
+    FD_ZERO(&fdr);
+    FD_SET(fdpair[0],&fdr);
+    if (select(fdpair[0]+1,&fdr,NULL,NULL,NULL)>0) break;
+    waitpid(-1,&status,WNOHANG);
   }
 
   exit (0);
