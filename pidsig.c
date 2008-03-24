@@ -4,8 +4,11 @@
 #include <string.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <pwd.h>
+#include <fcntl.h>
+#include <signal.h>
 
 void bail(const char *a0,const char *a1)
 {
@@ -25,6 +28,46 @@ long int gval=0;
 char *optd=NULL;
 char *optp=NULL;
 pid_t child;
+
+void killpidfile(char *pidfile,int sig)
+{
+  int fd;
+  char buf[20],*uend;
+  pid_t pid;
+  size_t sz;
+
+  if((fd=open(pidfile,O_RDONLY,0))>0) {
+    sz=read(fd,buf,sizeof(buf)-1);
+    close(fd);
+    if (sz > 0) {
+      buf[sz]=0;
+      pid=strtol(buf,&uend,10);
+      if (uend != buf && (*uend == '\0' || *uend == '\n' || *uend == '\r') && pid > 1) {
+        kill (pid,sig);
+      }
+    }
+  }
+}
+
+void pidsighandler(int sig)
+{
+  if (child) { kill(child,sig); }
+  killpidfile(optp,sig);
+}
+
+void setsighandler(void (*myhandler)(int))
+{
+  struct sigaction sa;
+  memset(&sa,0,sizeof(sa));
+  sa.sa_handler=myhandler;
+  sigaction(SIGINT,&sa,NULL);
+  sigaction(SIGHUP,&sa,NULL);
+  sigaction(SIGQUIT,&sa,NULL);
+  sigaction(SIGTERM,&sa,NULL);
+  sigaction(SIGUSR1,&sa,NULL);
+  sigaction(SIGUSR2,&sa,NULL);
+  sigaction(SIGALRM,&sa,NULL);
+}
 
 int main(int argc, char *argv[])
 {
@@ -112,6 +155,7 @@ int main(int argc, char *argv[])
   /* execute options */
   if (optd) { chroot(optd); chdir("/"); }
   if (optu) { if(gval) setgid(gval); setuid(uval); }
+  setsighandler(pidsighandler);
 
   /* go */
   write(fdpair[1],"\n",1);
@@ -126,7 +170,10 @@ int main(int argc, char *argv[])
     FD_ZERO(&fdr);
     FD_SET(fdpair[0],&fdr);
     if (select(fdpair[0]+1,&fdr,NULL,NULL,NULL)>0) break;
-    waitpid(-1,&status,WNOHANG);
+    if (child>0) {
+      waitpid(-1,&status,WNOHANG);
+      if (WIFEXITED(status)) { child=0; }
+    }
   }
 
   exit (0);
