@@ -1,3 +1,0 @@
-No license yet.
-
-Intended to be under BSD-like, GPLv2 or GPLv3 according to feedback.
