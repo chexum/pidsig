@@ -1,0 +1,5 @@
+pidsig -d/var/run -pnginx.pid.oldbin -pnginx.pid /usr/sbin/nginx
+
+-d DIRECTORY
+-p PIDFILE
+-u USER
