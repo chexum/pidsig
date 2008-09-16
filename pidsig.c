@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	} else if (argc > 0) {
 	  argc--; val=*++argv;
 	} else {
-	  bail("pidsig: option needs arg: ",argv[0]);
+	  bail("pidsig: option needs arg: ",argv[0]); val=0;
 	}
 	argv++;
 
