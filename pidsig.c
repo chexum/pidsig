@@ -159,12 +159,14 @@ int main(int argc, char *argv[])
 
   /* prepare for options */
   if (optd) {
-    /* XXX with -u given, root may not be able to change to the directory (NFS) */
+    /* Note that on NFS, this may fail if we are root, but before setuid (-u) */
+    /* XXX maybe try chdir again after setuid */
     if (chdir(optd)) {
       bail("pidsig: can't change to directory: ",optd);
     }
   }
   if (optu) {
+    /* XXX there's no -g yet, numeric userids will use the root group */
     uval=strtol(optu,&uend,10);
     if (*uend!='\0' || uend == optu) {
       upw=getpwnam(optu);
