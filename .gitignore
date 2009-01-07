@@ -1,2 +1,10 @@
 *.o
 pidsig
+
+Makefile
+CMakeFiles
+cmake_install.cmake
+install_manifest.txt
+CMakeCache.txt
+
+ROOT
