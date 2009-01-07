@@ -1,6 +1,6 @@
 
-/* Copyright (C) 2008, Farkas Janos
- * See LICENSE.txt
+/* Copyright (C) 2008, 2009, Farkas Janos
+ * See LICENSE
  */
 
 #include "pidsig.h"
@@ -167,6 +167,9 @@ int main(int argc, char *argv[])
 	  optpnum++;
 	}
 	break;
+
+      case 'v':
+	bail("version ",PACKAGE_VERSION);
 
       case '-':
         argv++;
