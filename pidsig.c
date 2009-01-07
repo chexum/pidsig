@@ -18,6 +18,7 @@
 
 void bail(const char *a0,const char *a1)
 {
+  write(2,"pidsig: ",8);
   if (a0) { write(2,a0,strlen(a0)); }
   if (a1) { write(2,a1,strlen(a1)); }
   write(2,"\n",sizeof("\n")-1);
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
   char **optparr=optp;
 
   /* empty cmd?? */
-  if (argc <= 1) { bail("pidsig: usage:\n",USAGE); }
+  if (argc <= 1) { bail("usage:\n",USAGE); }
   argv++; argc--;
 
   /* parse options */
@@ -128,20 +129,20 @@ int main(int argc, char *argv[])
 	} else if (argc > 0) {
 	  argc--; val=*++argv;
 	} else {
-	  bail("pidsig: option needs arg: ",argv[0]); val=0;
+	  bail("option needs arg: ",argv[0]); val=0;
 	}
 	argv++;
 
 	if ('u' == opt) {
-	  if (optu) { bail("pidsig: option can be specified only once: ","-u"); }
+	  if (optu) { bail("option can be specified only once: ","-u"); }
 	  optu=val;
 	}
 	if ('d' == opt) {
-	  if (optd) { bail("pidsig: option can be specified only once: ","-d"); }
+	  if (optd) { bail("option can be specified only once: ","-d"); }
 	  optd=val;
 	}
 	if ('p' == opt) {
-	  if (optpnum >= OPTPMAX) { bail("pidsig: too many -p options, last: ",val); }
+	  if (optpnum >= OPTPMAX) { bail("too many -p options, last: ",val); }
 	  *optparr++=val;
 	  optpnum++;
 	}
@@ -152,7 +153,7 @@ int main(int argc, char *argv[])
         continue;
 
       default:
-	bail("pidsig: bad option, usage:\n",USAGE);
+	bail("bad option, usage:\n",USAGE);
 	break;
     }
   }
@@ -162,7 +163,7 @@ int main(int argc, char *argv[])
     /* Note that on NFS, this may fail if we are root, but before setuid (-u) */
     /* XXX maybe try chdir again after setuid */
     if (chdir(optd)) {
-      bail("pidsig: can't change to directory: ",optd);
+      bail("can't change to directory: ",optd);
     }
   }
   if (optu) {
@@ -171,42 +172,42 @@ int main(int argc, char *argv[])
     if (*uend!='\0' || uend == optu) {
       upw=getpwnam(optu);
       if (!upw) {
-        bail("pidsig: unknown uid: ",optu);
+        bail("unknown uid: ",optu);
       }
       uval=upw->pw_uid;
       gval=upw->pw_gid;
     }
   }
   if (*argv == NULL) {
-    bail("pidsig: no command to ","execv");
+    bail("no command to ","execv");
   }
   if (optu || optd) {
     if (getuid()) {
       if (optu && optd) {
-        bail("pidsig: only root can ","chroot or change uid");
+        bail("only root can ","chroot or change uid");
       }
       if (optu) {
-        bail("pidsig: only root can ","change uid");
+        bail("only root can ","change uid");
       }
       if (optd) {
-        bail("pidsig: only root can ","chroot");
+        bail("only root can ","chroot");
       }
     }
   }
 
   /* fghack/startup delay */
   if (pipe(fdpair)) {
-    bail("pidsig: can't create ","pipe");
+    bail("can't create ","pipe");
   }
 
   /* djb-chain */
   child=fork();
-  if (child==-1) { bail("pidsig: can't ","fork"); }
+  if (child==-1) { bail("can't ","fork"); }
   if (child==0) {
     read(fdpair[0],buf,1);
     close(fdpair[0]);
     execvp(*argv,argv);
-    bail("pidsig: can't exec ",*argv);
+    bail("can't exec ",*argv);
   }
 
   /* execute options */
