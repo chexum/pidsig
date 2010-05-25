@@ -1,5 +1,5 @@
 
-/* Copyright (C) 2008, 2009, Farkas Janos
+/* Copyright (C) 2008, 2009, 2010 Farkas Janos
  * See LICENSE
  */
 
