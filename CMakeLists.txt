@@ -27,3 +27,23 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/pidsig.h.in ${CMAKE_CURRENT_BINARY_DI
 INSTALL(PROGRAMS
   pidsig
   DESTINATION bin)
+
+IF (UNIX)
+  ADD_CUSTOM_TARGET (distclean @echo cleaning for source distribution)
+  SET(DISTCLEANED
+   CMakeFiles
+   Makefile
+   pidsig.h
+   pidsig
+   CMakeCache.txt
+   cmake*.cmake
+  )
+
+  ADD_CUSTOM_COMMAND(
+    DEPENDS clean
+    COMMENT "distribution clean"
+    COMMAND rm
+    ARGS    -rf CMakeTmp ${DISTCLEANED}
+    TARGET  distclean
+  )
+ENDIF(UNIX)
