@@ -36,12 +36,17 @@
 #include <signal.h>
 #endif
 
-void bail(const char *a0,const char *a1)
+void mylog(const char *a0,const char *a1)
 {
   write(2,"pidsig: ",8);
   if (a0) { write(2,a0,strlen(a0)); }
   if (a1) { write(2,a1,strlen(a1)); }
   write(2,"\n",sizeof("\n")-1);
+}
+
+void bail(const char *a0,const char *a1)
+{
+  mylog(a0,a1);
   exit(1);
 }
 
