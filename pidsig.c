@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
   char *val,opt,*uend,buf[1];
   struct passwd *upw;
   int fdpair[2];
+  int initpair[2];
   char **optparr=optp;
 
   /* empty cmd?? */
@@ -223,17 +224,28 @@ int main(int argc, char *argv[])
     }
   }
 
-  /* fghack/startup delay */
+  /* we use the initpair to let the child wait until we are ready to watch */
+  /* fdpair is used to keep an fd open inside the child so that we can see observe its death */
+  /* cannot be the same with bidirectional pipes */
   if (pipe(fdpair)) {
-    bail("can't create ","pipe");
+    bail("can't create ","pipe pair");
+  }
+  if (pipe(initpair)) {
+    bail("can't create new ","pipe pair");
   }
 
   /* djb-chain */
   child=fork();
   if (child==-1) { bail("can't ","fork"); }
   if (child==0) {
-    read(fdpair[0],buf,1);
+    close(initpair[1]);
     close(fdpair[0]);
+    /* wait for the go and lose it */
+    read(initpair[0],buf,1);
+    close(initpair[0]);
+    /* move the only fd used to possibly the lowest no */
+    dup2(fdpair[1],fdpair[0]);
+
     execvp(*argv,argv);
     bail("can't exec ",*argv);
   }
@@ -244,8 +256,9 @@ int main(int argc, char *argv[])
   setsighandler(pidsighandler);
 
   /* go */
-  write(fdpair[1],"\n",1);
-  close(fdpair[1]);
+  close(fdpair[1]); /* child */
+  close(initpair[0]);
+  close(initpair[1]); /* send an eof */
   pipefd=fdpair[0];
 
   /* wait for any signal or exiting child */
@@ -254,13 +267,11 @@ int main(int argc, char *argv[])
     int res;
 
     FD_ZERO(&fdr);
-    if (pipefd>=0) FD_SET(pipefd,&fdr);
+    if (0<=pipefd) { FD_SET(pipefd,&fdr); }
     /* if the pipe hack is closed and out of children, we'll leave */
     res=select(pipefd+1,&fdr,NULL,NULL,NULL);
-    if (res > 0) {
-      if (pipefd>=0) {
-        close(pipefd); pipefd=-1;
-      }
+    if (0<res && 0<=pipefd && (FD_ISSET(pipefd,&fdr))) {
+      close(pipefd); pipefd=-1;
     }
     if (-1 == pipefd && 0 == child) break;
   }
