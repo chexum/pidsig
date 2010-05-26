@@ -1,0 +1,13 @@
+
+0.10 - 2010-05-26
+
+	* pidsig.c: removed race condition/logic error with the startup
+	pipes.  Previously, a single pipe pair was used for read and
+	write, but this caused the main process to be able to read its
+	output and closure of the pipe.
+
+	* b/CMakeLists.txt: add distclean
+
+Previous versions
+
+	- Development only, please read the git changes.
