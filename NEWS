@@ -1,6 +1,8 @@
 
 DEV
 
+	* pidsig.c: error messages are prefixed with "error:".
+
 	* pidsig.c: version now exits with success.
 
 0.10 - 2010-05-26

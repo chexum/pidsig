@@ -155,20 +155,20 @@ int main(int argc, char *argv[])
 	} else if (argc > 0) {
 	  argc--; val=*++argv;
 	} else {
-	  bail("option needs arg: ",argv[0]); val=0;
+	  bail("error: option needs arg: ",argv[0]); val=0;
 	}
 	argv++;
 
 	if ('u' == opt) {
-	  if (optu) { bail("option can be specified only once: ","-u"); }
+	  if (optu) { bail("error: option can be specified only once: ","-u"); }
 	  optu=val;
 	}
 	if ('d' == opt) {
-	  if (optd) { bail("option can be specified only once: ","-d"); }
+	  if (optd) { bail("error: option can be specified only once: ","-d"); }
 	  optd=val;
 	}
 	if ('p' == opt) {
-	  if (optpnum >= OPTPMAX) { bail("too many -p options, last: ",val); }
+	  if (optpnum >= OPTPMAX) { bail("error: too many -p options, first unused: ",val); }
 	  *optparr++=val;
 	  optpnum++;
 	}
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
         continue;
 
       default:
-	bail("bad option, usage:\n",USAGE);
+	bail("error: bad option, usage:\n",USAGE);
 	break;
     }
   }
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
     /* If we drop root, we would not be able chroot however */
     /* XXX - Try setuid first if chroot not needed, or setfsuid */
     if (chdir(optd)) {
-      bail("can't change to directory: ",optd);
+      bail("error: can't change to directory: ",optd);
     }
   }
   if (optu) {
@@ -203,25 +203,25 @@ int main(int argc, char *argv[])
     if (*uend!='\0' || uend == optu) {
       upw=getpwnam(optu);
       if (!upw) {
-        bail("unknown uid: ",optu);
+        bail("error: unknown uid: ",optu);
       }
       uval=upw->pw_uid;
       gval=upw->pw_gid;
     }
   }
   if (*argv == NULL) {
-    bail("no command to ","execv");
+    bail("error: no command to ","exec");
   }
   if (optu || optd) {
     if (getuid()) {
       if (optu && optd) {
-        bail("only root can ","chroot or change uid");
+        bail("error: only root can ","chroot or change uid");
       }
       if (optu) {
-        bail("only root can ","change uid");
+        bail("error: only root can ","change uid");
       }
       if (optd) {
-        bail("only root can ","chroot");
+        bail("error: only root can ","chroot");
       }
     }
   }
@@ -230,15 +230,15 @@ int main(int argc, char *argv[])
   /* fdpair is used to keep an fd open inside the child so that we can see observe its death */
   /* cannot be the same with bidirectional pipes */
   if (pipe(fdpair)) {
-    bail("can't create ","pipe pair");
+    bail("error: can't create ","pipe pair");
   }
   if (pipe(initpair)) {
-    bail("can't create new ","pipe pair");
+    bail("error: can't create ","new pipe pair");
   }
 
   /* djb-chain */
   child=fork();
-  if (child==-1) { bail("can't ","fork"); }
+  if (child==-1) { bail("error: can't ","fork"); }
   if (child==0) {
     close(initpair[1]);
     close(fdpair[0]);
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
     dup2(fdpair[1],fdpair[0]);
 
     execvp(*argv,argv);
-    bail("can't exec ",*argv);
+    bail("error: can't exec ",*argv);
   }
 
   /* execute options */
