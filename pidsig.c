@@ -175,7 +175,8 @@ int main(int argc, char *argv[])
 	break;
 
       case 'v':
-	bail("version ",PACKAGE_VERSION);
+	mylog("version ",PACKAGE_VERSION);
+	exit(0);
 
       case '-':
         argv++;
