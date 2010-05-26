@@ -191,7 +191,8 @@ int main(int argc, char *argv[])
   /* prepare for options */
   if (optd) {
     /* Note that on NFS, this may fail if we are root, but before setuid (-u) */
-    /* XXX maybe try chdir again after setuid */
+    /* If we drop root, we would not be able chroot however */
+    /* XXX - Try setuid first if chroot not needed, or setfsuid */
     if (chdir(optd)) {
       bail("can't change to directory: ",optd);
     }
