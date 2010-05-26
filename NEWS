@@ -1,5 +1,5 @@
 
-DEV
+0.11 - 2010-05-27
 
 	* pidsig.c: error messages are prefixed with "error:".
 
