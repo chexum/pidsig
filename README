@@ -1,3 +1,11 @@
+SAMPLE COMPILATION
+
+CC="diet gcc" cmake -DCMAKE_INSTALL_PREFIX=/usr -v .
+make
+make install
+
+SAMPLE USAGE
+
 pidsig -d/var/run -pnginx.pid.oldbin -pnginx.pid /usr/sbin/nginx
 
 -d DIRECTORY
